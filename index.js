@@ -150,6 +150,7 @@ function CASAuthentication(options) {
     this.cas_host        = parsed_cas_url.hostname;
     this.cas_port        = parsed_cas_url.protocol === 'http:' ? 80 : 443;
     this.cas_path        = parsed_cas_url.pathname;
+    this.return_to       = options.return_to;
 
     this.service_url     = options.service_url;
 
@@ -245,7 +246,7 @@ CASAuthentication.prototype._login = function(req, res, next) {
 
     // Save the return URL in the session. If an explicit return URL is set as a
     // query parameter, use that. Otherwise, just use the URL from the request.
-    req.session.cas_return_to = req.query.returnTo || url.parse(req.url).path;
+    req.session.cas_return_to = req.query.returnTo || this.return_to || url.parse(req.url).path;
 
     // Set up the query parameters.
     var query = {
