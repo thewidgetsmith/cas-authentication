@@ -14,12 +14,12 @@ It also provides two route endpoint functions:
 
 ## Installation
 
-    npm install cas-authentication
+    npm install node-cas-authentication
 
 ## Setup
 
 ```javascript
-var CASAuthentication = require('cas-authentication');
+var CASAuthentication = require('node-cas-authentication');
 
 var cas = new CASAuthentication({
     cas_url         : 'https://my-cas-host.com/cas',
@@ -57,7 +57,7 @@ var cas = new CASAuthentication({
 ```javascript
 var app = require('express')();
 var session = require('express-session');
-var CASAuthentication = require('cas-authentication');
+var CASAuthentication = require('node-cas-authentication');
 
 // Set up an Express session, which is required for CASAuthentication.
 app.use( session({
