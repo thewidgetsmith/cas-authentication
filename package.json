@@ -1,6 +1,6 @@
 {
   "name": "node-cas-authentication",
-  "version": "0.0.9",
+  "version": "0.0.10",
   "description": "A CAS authentication library designed to be used as middleware for an Express server.",
   "keywords": [
     "cas",
@@ -12,9 +12,9 @@
     "middleware",
     "express"
   ],
-  "homepage": "https://github.com/kylepixel/cas-authentication",
+  "homepage": "https://github.com/shunnmugam/cas-authentication",
   "bugs": {
-    "url": "https://github.com/kylepixel/cas-authentication/issues"
+    "url": "https://github.com/shunnmugam/cas-authentication/issues"
   },
   "license": "MIT",
   "author": "Kyle Maguire <kylepixel@gmail.com>",
