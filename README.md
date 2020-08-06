@@ -1,3 +1,5 @@
+[![JavaScript Style Guide](https://img.shields.io/badge/code_style-standard-brightgreen.svg)](https://standardjs.com)
+
 # Express CAS Authentication
 
 This is a CAS authentication library designed to be used with an Express server.

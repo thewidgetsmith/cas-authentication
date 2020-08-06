@@ -1,6 +1,6 @@
 {
   "name": "node-cas-authentication",
-  "version": "0.0.10",
+  "version": "1.0.0",
   "description": "A CAS authentication library designed to be used as middleware for an Express server.",
   "keywords": [
     "cas",
@@ -23,11 +23,17 @@
     "type": "git",
     "url": "https://github.com/shunnmugam/cas-authentication.git"
   },
+  "scripts": {
+    "lint": "standard --verbose | snazzy",
+    "lint:fix": "standard --fix"
+  },
   "dependencies": {
-    "xml2js": "^0.4.8"
+    "xml2js": "^0.4.23"
   },
   "devDependencies": {
-    "express": "^4.12.3",
-    "express-session": "^1.11.1"
+    "express": "^4.17.1",
+    "express-session": "^1.17.1",
+    "snazzy": "^8.0.0",
+    "standard": "^14.3.4"
   }
 }
