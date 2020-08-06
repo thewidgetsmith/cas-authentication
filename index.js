@@ -9,11 +9,10 @@
 /* spell-checker:ignore serviceresponse */
 /* spell-checker:ignore statuscode */
 /**
- * CAS Authentication Client for Node.js
+ * CAS Authentication Client for Node.
  */
 'use strict'
 
-const URL = require('url')
 const http = require('http')
 const https = require('https')
 const parseXML = require('xml2js').parseString
