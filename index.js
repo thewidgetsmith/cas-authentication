@@ -12,7 +12,7 @@
  * CAS Authentication Client for Node.
  */
 'use strict'
-
+const URL = require('url').URL
 const http = require('http')
 const https = require('https')
 const parseXML = require('xml2js').parseString
