@@ -88,6 +88,8 @@ function CASAuthentication (options) {
   } else if (this.cas_version === '2.0' || this.cas_version === '3.0') {
     this._validateUri = (this.cas_version === '2.0' ? '/serviceValidate' : '/p3/serviceValidate')
     this._validate = (body, callback) => {
+      console.log('URI', this._validateUri)
+      console.log('BODY', body)
       parseXML(body, XML_PROCESSORS_CONFIG, (err, result) => {
         if (err) {
           callback(new Error('Response from CAS server was bad.'))
@@ -160,13 +162,12 @@ function CASAuthentication (options) {
 
   const parsed_cas_url = new URL(options.cas_url)
   this.request_client = parsed_cas_url.protocol === 'http:' ? http : https
-  this.cas_port = parsed_cas_url.port || parsed_cas_url.protocol === 'http:' ? 80 : 443
+  this.cas_port = parsed_cas_url.port // || parsed_cas_url.protocol === 'http:' ? 80 : 443
   this.cas_host = parsed_cas_url.hostname
   this.cas_path = parsed_cas_url.pathname
-
-  this.service_url = options.service_url
-  this.return_to = options.return_to
   this.cas_url = options.cas_url
+  this.return_to = options.return_to
+  this.service_url = options.service_url
 
   this.renew = options.renew !== undefined ? !!options.renew : false
   this.session_name = options.session_name !== undefined ? options.session_name : 'cas_user'
@@ -182,6 +183,10 @@ function CASAuthentication (options) {
   this.bounce_redirect = this.bounce_redirect.bind(this)
   this.block = this.block.bind(this)
   this.logout = this.logout.bind(this)
+
+  console.log('OPTIONS', options)
+  console.log('PORT', parsed_cas_url.port || parsed_cas_url.protocol === 'http:' ? 80 : 443)
+  console.log('THIS', this)
 }
 
 /**
@@ -189,7 +194,7 @@ function CASAuthentication (options) {
  * already validated with CAS, their request will be redirected to the CAS
  * login page.
  */
-CASAuthentication.prototype.bounce = (req, res, next) => {
+CASAuthentication.prototype.bounce = function (req, res, next) {
   // Handle the request with the bounce authorization type.
   this._handle(req, res, next, AUTH_TYPE.BOUNCE)
 }
@@ -199,7 +204,7 @@ CASAuthentication.prototype.bounce = (req, res, next) => {
  * already validated with CAS, their request will be redirected to the CAS
  * login page.
  */
-CASAuthentication.prototype.bounce_redirect = (req, res, next) => {
+CASAuthentication.prototype.bounce_redirect = function (req, res, next) {
   // Handle the request with the bounce authorization type.
   this._handle(req, res, next, AUTH_TYPE.BOUNCE_REDIRECT)
 }
@@ -208,7 +213,7 @@ CASAuthentication.prototype.bounce_redirect = (req, res, next) => {
  * Blocks a request with CAS authentication. If the user's session is not
  * already validated with CAS, they will receive a 401 response.
  */
-CASAuthentication.prototype.block = (req, res, next) => {
+CASAuthentication.prototype.block = function (req, res, next) {
   // Handle the request with the block authorization type.
   this._handle(req, res, next, AUTH_TYPE.BLOCK)
 }
@@ -216,7 +221,7 @@ CASAuthentication.prototype.block = (req, res, next) => {
 /**
  * Handle a request with CAS authentication.
  */
-CASAuthentication.prototype._handle = (req, res, next, authType) => {
+CASAuthentication.prototype._handle = function (req, res, next, authType) {
   // If the session has been validated with CAS, no action is required.
   if (req.session[this.session_name]) {
     // If this is a bounce redirect, redirect the authenticated user.
@@ -251,29 +256,40 @@ CASAuthentication.prototype._handle = (req, res, next, authType) => {
 /**
  * Redirects the client to the CAS login.
  */
-CASAuthentication.prototype._login = (req, res, next) => {
+CASAuthentication.prototype._login = function (req, res, next) {
   // Save the return URL in the session. If an explicit return URL is set as a
   // query parameter, use that. Otherwise, just use the URL from the request.
-  const request_url = new URL(req.url)
-  req.session.cas_return_to = req.query.returnTo || this.return_to || request_url.path
+  console.log('REQ', req.url)
+  req.session.cas_return_to = req.query.returnTo || this.return_to || req.path
 
   // Set up the query parameters.
-  const query = {
-    service: this.service_url + request_url.pathname,
+  // const query = {
+  //   service: this.service_url + req.path,
+  //   renew: this.renew
+  // }
+
+  const search = new URLSearchParams({
+    service: this.service_url + req.path,
     renew: this.renew
-  }
+  })
+
+  const redirect = new URL(this.cas_url + '/login')
+  redirect.search = search
+
+  console.log('RED', redirect)
 
   // Redirect to the CAS login.
-  res.redirect(this.cas_url + URL.format({
-    pathname: '/login',
-    query: query
-  }))
+  res.redirect(redirect)
+  // res.redirect(this.cas_url + URL.format({
+  //   pathname: '/login',
+  //   query: query
+  // }))
 }
 
 /**
  * Logout the currently logged in CAS user.
  */
-CASAuthentication.prototype.logout = (req, res, next) => {
+CASAuthentication.prototype.logout = function (req, res, next) {
   // Destroy the entire session if the option is set.
   if (this.destroy_session) {
     if (req.session.destroy) {
@@ -301,24 +317,25 @@ CASAuthentication.prototype.logout = (req, res, next) => {
 /**
  * Handles the ticket generated by the CAS login requester and validates it with the CAS login acceptor.
  */
-CASAuthentication.prototype._handleTicket = (req, res) => {
-  const requestUrl = new URL(req.url)
-  const requestOptions = {
-    host: this.cas_host,
-    port: this.cas_port
+CASAuthentication.prototype._handleTicket = function (req, res) {
+  const casRequest = {
+    options: {},
+    url: ''
   }
 
   let post_data = null
 
   if (['1.0', '2.0', '3.0'].indexOf(this.cas_version) >= 0) {
-    requestOptions.method = 'GET'
-    requestOptions.path = URL.format({
-      pathname: this.cas_path + this._validateUri,
-      query: {
-        service: this.service_url + requestUrl.pathname,
-        ticket: req.query.ticket
-      }
+    const search = new URLSearchParams({
+      service: this.service_url + req.path,
+      ticket: req.query.ticket
     })
+
+    const reqUrl = new URL(this.cas_url + this._validateUri)
+    reqUrl.search = search
+
+    casRequest.url = reqUrl.href
+    casRequest.options.method = 'GET'
   } else if (this.cas_version === 'saml1.1') {
     const now = new Date()
     post_data = `\
@@ -340,49 +357,57 @@ CASAuthentication.prototype._handleTicket = (req, res) => {
   </SOAP-ENV:Body>
 </SOAP-ENV:Envelope>
 `
-    requestOptions.method = 'POST'
-    requestOptions.path = URL.format({
-      pathname: this.cas_path + this._validateUri,
-      query: {
-        TARGET: this.service_url + requestUrl.pathname,
-        ticket: ''
-      }
+    const search = new URLSearchParams({
+      TARGET: this.service_url + req.path,
+      ticket: ''
     })
-    requestOptions.headers = {
+
+    const reqUrl = new URL(this.cas_url + this._validateUri)
+    reqUrl.search = search
+
+    casRequest.url = reqUrl.href
+    casRequest.options.method = 'POST'
+    casRequest.options.headers = {
       'Content-Type': 'text/xml',
       'Content-Length': Buffer.byteLength(post_data)
     }
   }
 
-  const request = this.request_client.request(requestOptions, function (response) {
-    response.setEncoding('utf8')
-    let body = ''
+  console.log('REQ_OPTS', casRequest)
 
-    response.on('data', function (chunk) {
-      body += chunk
-      return body
-    })
+  const request = this.request_client.request(
+    casRequest.url,
+    casRequest.options,
+    function (response) {
+      response.setEncoding('utf8')
+      let body = ''
 
-    response.on('end', function () {
-      this._validate('', function (err, user, attributes) {
-        if (err) {
-          console.log(err)
-          res.sendStatus(401)
-        } else {
-          req.session[this.session_name] = user
-          if (this.session_info) {
-            req.session[this.session_info] = attributes || {}
+      response.on('data', function (chunk) {
+        console.log('CHUNK', '' + chunk)
+        return body += chunk
+        // return body
+      })
+
+      response.on('end', function () {
+        this._validate(body, function (err, user, attributes) {
+          if (err) {
+            console.log(err)
+            res.sendStatus(401)
+          } else {
+            req.session[this.session_name] = user
+            if (this.session_info) {
+              req.session[this.session_info] = attributes || {}
+            }
+            res.redirect(req.session.cas_return_to)
           }
-          res.redirect(req.session.cas_return_to)
-        }
+        }.bind(this))
       }.bind(this))
-    }.bind(this))
 
-    response.on('error', function (err) {
-      console.log('Response error from CAS: ', err)
-      res.sendStatus(401)
-    })
-  }.bind(this))
+      response.on('error', function (err) {
+        console.log('Response error from CAS: ', err)
+        res.sendStatus(401)
+      })
+    }.bind(this))
 
   request.on('error', function (err) {
     console.log('Request error with CAS: ', err)
