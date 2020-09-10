@@ -1,7 +1,7 @@
 {
-  "name": "node-cas-authentication",
+  "name": "usu-node-cas",
   "version": "1.0.0",
-  "description": "A CAS authentication library designed to be used as middleware for an Express server.",
+  "description": "A CAS authentication client library designed to be used as middleware for an Express server.",
   "keywords": [
     "cas",
     "central authentication service",
@@ -18,7 +18,7 @@
   },
   "license": "MIT",
   "author": "Kyle Maguire <kylepixel@gmail.com>",
-  "main": "index.js",
+  "main": "src/client.js",
   "repository": {
     "type": "git",
     "url": "https://github.com/shunnmugam/cas-authentication.git"
@@ -28,6 +28,7 @@
     "lint:fix": "standard --fix"
   },
   "dependencies": {
+    "debug": "^4.1.1",
     "xml2js": "^0.4.23"
   },
   "devDependencies": {
